@@ -1,0 +1,23 @@
+- name: Install Nginx
+  yum:
+    name: nginx
+    state: present
+
+- name: Copy default Nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    force: true
+
+- name: Copy Nginx reverse proxy configuration
+  template:
+    src: proxy_reverse.conf.j2
+    dest: /etc/nginx/conf.d/default.conf
+    force: true
+
+- name: Start Nginx
+  systemd:
+    name: nginx
+    daemon_reload: true
+    enabled: true
+    state: started
