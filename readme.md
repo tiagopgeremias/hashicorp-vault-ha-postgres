@@ -21,7 +21,7 @@ In this project there are some characteristics that you should be aware of.
 Every time the Vault service is started, a **/usr/local/bin/unsealing** script is run. This script has all the keys to unseal the vault.
 
 - Vault active node verification
-In the keepalived configuration file there is a ** vrrp_script ** that executes a script **/usr/local/bin/cluster_check** to check which Vault cluster's active node. In this way keepalived is able to identify which host should receive the VIP address.
+In the keepalived configuration file there is a **vrrp_script** that executes a script **/usr/local/bin/cluster_check** to check which Vault cluster's active node. In this way keepalived is able to identify which host should receive the VIP address.
 
 - After the playbook has successfully run, a file called **vault_secrets.vkey** will be created with unseal and root token keys.
 
