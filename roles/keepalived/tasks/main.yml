@@ -1,0 +1,23 @@
+- name: Install Keepalived
+  yum:
+    name: keepalived
+    state: present
+
+- name: Copy configuration
+  template:
+    src: keepalived.j2
+    dest: /etc/keepalived/keepalived.conf
+
+- name: Copy cluster checker
+  template:
+    src: cluster_check.j2
+    dest: /usr/local/bin/cluster_check
+    mode: '0755'
+    force: true
+
+- name: Start Keepalived
+  systemd:
+    name: keepalived
+    enabled: true
+    daemon_reload: true
+    state: started

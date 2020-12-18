@@ -1,0 +1,2 @@
+#!/bin/bash
+VAULT_ADDR=http://0.0.0.0:8200 vault status | grep "HA Mode.*active$" > /dev/null 2>&1
