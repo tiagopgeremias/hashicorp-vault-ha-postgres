@@ -1,0 +1,60 @@
+- name: Install PostgreSQL Repo
+  yum:
+    name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+
+- name: Install PostgreSQL {{ pgsql_version }}
+  yum:
+    name: postgresql{{ pgsql_version }}-server
+    state: present
+
+- name: PostgreSQL Initial configuration 
+  shell: /usr/pgsql-{{ pgsql_version }}/bin/postgresql-{{ pgsql_version }}-setup initdb
+
+- name: Copy PostgreSQL postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: /var/lib/pgsql/{{ pgsql_version }}/data/postgresql.conf
+    force: yes
+
+- name: Copy PostgreSQL pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: /var/lib/pgsql/{{ pgsql_version }}/data/pg_hba.conf
+    force: yes
+
+- name: Copy PostgreSQL pg_hba.conf
+  template:
+    src: db_structure.sql.j2
+    dest: /tmp/db_structure.sql
+    owner: postgres
+    group: postgres
+    
+  
+- name: Start PostgreSQL service
+  systemd:
+    name: postgresql-{{ pgsql_version }}
+    enabled: true
+    daemon_reload: true
+    state: started
+
+- name: Create PostgreSQL user
+  shell: createuser {{ pgsql_user }}
+  become_user: postgres
+
+- name: Create PostgreSQL database
+  shell: createdb {{ pgsql_database }} -O {{ pgsql_user }}
+  become_user: postgres
+
+- name: Change {{ pgsql_user }} user password
+  shell: psql -d template1 -c "ALTER USER {{ pgsql_user }} WITH PASSWORD '{{ pgsql_password }}';"
+  become_user: postgres
+
+- name: Create PostgreSQL database structure
+  shell: psql -d {{ pgsql_database }} -f /tmp/db_structure.sql
+  become_user: postgres
+
+- name: Remove db_structure.sql
+  file:
+    path: /tmp/db_structure.sql
+    state: absent
