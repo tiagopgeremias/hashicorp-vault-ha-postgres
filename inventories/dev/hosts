@@ -1,0 +1,16 @@
+[all:vars]
+ansible_user=vagrant
+ansible_become=true
+
+[vault_cluster:children]
+node_active
+nodes_standby
+
+[node_active]
+192.168.0.170
+
+[nodes_standby]
+192.168.0.171
+
+[db_server]
+192.168.0.180

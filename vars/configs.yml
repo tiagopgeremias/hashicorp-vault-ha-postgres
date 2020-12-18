@@ -1,0 +1,12 @@
+vip_address: 192.168.0.190
+vip_interface: eth1
+
+# Keepalived Variables
+interval_check: 2
+total_failures: 2
+total_successful: 2
+
+# PostgreSQL mysql_variables
+pgsql_version: 10
+pgsql_user: vaultdb
+pgsql_database: vault_secrets
