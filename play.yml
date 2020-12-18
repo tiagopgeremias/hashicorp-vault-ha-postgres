@@ -1,0 +1,10 @@
+- hosts: '*'
+  become: yes
+  vars_files:
+    - vars/configs.yml
+  roles:
+    - {role: system}
+    - {role: postgres, when: "'db_server' in group_names"}
+    - {role: vault, when: "'vault_cluster' in group_names"}
+    - {role: keepalived, when: "'vault_cluster' in group_names"}
+    - {role: nginx, when: "'vault_cluster' in group_names"}
