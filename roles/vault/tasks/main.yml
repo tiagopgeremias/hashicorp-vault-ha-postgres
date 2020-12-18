@@ -1,0 +1,81 @@
+- name: Add Hashicorp Repo
+  shell: yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+
+- name: Install Vault
+  yum:
+    name: vault
+    state: present
+
+- name: Create a directory vault.d
+  file:
+    path: /etc/vault.d
+    state: directory
+    mode: '0755'
+
+- name: Copy config.hcl
+  template:
+    src: config.hcl.j2
+    dest: /etc/vault.d/config.hcl
+
+- name: Copy vault.service
+  template:
+    src: vault.service.j2
+    dest: /etc/systemd/system/vault.service
+    mode: '0755'
+
+- name: Check Unsealing script
+  stat:
+    path: /usr/local/bin/unsealing
+  register: unsealing_file
+
+- name: Execute Vault Server
+  shell: nohup vault server --config=/etc/vault.d/config.hcl </dev/null >/dev/null 2>&1 & sleep 5
+  when: "'node_active' in group_names and not unsealing_file.stat.exists"
+
+- name: Generate Keys
+  shell: VAULT_ADDR=http://0.0.0.0:8200 vault operator init > /tmp/keys.txt
+  when: "'node_active' in group_names and not unsealing_file.stat.exists"
+
+- name: Exit vault
+  shell: kill -9 $(ps -ef | pgrep "vault")
+  ignore_errors: yes
+  when: "'node_active' in group_names and not unsealing_file.stat.exists"
+    
+- name: Get Vault Unsealing Keys
+  shell: cat /tmp/keys.txt | grep "^Unseal Key [0-9]:" | awk '{print $4}'
+  register: vault_unsealing_keys
+  when: "'node_active' in group_names and not unsealing_file.stat.exists"
+
+- name: Get Vault Root Token
+  shell: cat /tmp/keys.txt | grep "^Initial Root Token:" | awk '{print $4}'
+  register: vault_root_token
+  when: "'node_active' in group_names and not unsealing_file.stat.exists"
+
+- name: Remove keys.txt
+  file:
+    path: /tmp/keys.txt
+    state: absent
+  when: "'node_active' in group_names and not unsealing_file.stat.exists"
+
+- name: Copy unsealing
+  template:
+    src: unsealing.j2
+    dest: /usr/local/bin/unsealing
+    mode: '0755'
+  when: "not unsealing_file.stat.exists"
+
+- name: Enable vault.service
+  systemd:
+    name: vault
+    enabled: yes
+    daemon_reload: yes
+    state: started
+
+- name: Copy vault_secrets Local
+  template:
+    src: vault_secrets.vkey.j2
+    dest: ./vault_secrets.vkey
+  vars:
+    ansible_become: false
+  delegate_to: localhost
+  when: "'node_active' in group_names and not unsealing_file.stat.exists"

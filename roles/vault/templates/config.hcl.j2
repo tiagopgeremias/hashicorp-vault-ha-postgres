@@ -1,0 +1,17 @@
+listener "tcp" {
+  tls_disable = "true"
+  address = "0.0.0.0:8200"
+  cluster_address = "{{ inventory_hostname }}:8201"
+}
+
+storage "postgresql" {
+  connection_url = "postgresql://{{ pgsql_user }}:{{ pgsql_password }}@{{ groups['db_server'][0] }}:5432/{{ pgsql_database }}?sslmode=disable"
+  table="vault_kv_store"
+  ha_enabled=true
+  ha_table="vault_ha_locks"
+}
+
+ui=true
+log_level = "info"
+api_addr="http://{{ inventory_hostname }}:8200"
+cluster_addr="http://{{ inventory_hostname }}:8201"
