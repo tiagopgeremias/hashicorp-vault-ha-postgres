@@ -1,0 +1,29 @@
+- name: Install Yum Utils
+  yum:
+    name: yum-utils
+    state: present
+
+- name: Install Epel Release
+  yum:
+    name: epel-release
+    state: present
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+  register: disable_selinux
+
+- name: Reboot system
+  shell: sleep 2 && shutdown -r now
+  async: 5
+  poll: 0
+  when: disable_selinux.changed
+
+- name: Reestablishing the connection with the hosts
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 300
+  when: disable_selinux.changed
+  
